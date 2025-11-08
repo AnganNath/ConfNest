@@ -1,11 +1,19 @@
 import { Router } from 'express';
 import Submission from '../models/Submission.js';
 import { auth } from '../middleware/auth.js';
+import Conference from "../models/Conference.js"; 
+import ConfReg from "../models/ConferenceRegistration.js" // <-- add on top
 
 const r = Router();
 
 // CREATE submission (AUTHOR)
 r.post('/', auth(['AUTHOR']), async (req,res)=>{
+  const conf = await Conference.findById(req.body.conference)
+  if(!conf) return res.status(404).json({message:"Conference not found"})
+
+  if(conf.status === "CLOSED")
+    return res.status(400).json({message:"Conference is closed. Submissions disabled."})
+
   const sub = await Submission.create({ ...req.body, author: req.user.id });
   res.json(sub);
 });
@@ -18,7 +26,7 @@ r.post('/:id/assign', auth(['CHAIR']), async (req,res)=>{
 });
 
 // GET submissions depending on role
-r.get('/', auth(['AUTHOR','CHAIR','REVIEWER']), async (req,res)=>{
+r.get('/', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
   let q = {}
 
   if (req.user.role === 'AUTHOR') {
@@ -36,17 +44,38 @@ r.get('/', auth(['AUTHOR','CHAIR','REVIEWER']), async (req,res)=>{
 });
 
 // *** NEW: submissions for a specific conference ***
-r.get('/byConf/:id', auth(['AUTHOR','CHAIR','REVIEWER']), async (req,res)=>{
-  let q = { conference: req.params.id }
+r.get('/byConf/:id', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
 
-  // if author: show only their own papers
-  if(req.user.role === 'AUTHOR'){
-    q.author = req.user.id
+  // CHAIR SEE ALL
+  if(req.user.role === "CHAIR"){
+    const list = await Submission.find({conference:req.params.id})
+    return res.json(list)
   }
 
-  const list = await Submission.find(q)
-  res.json(list)
+  // AUTHOR → only own
+  if(req.user.role === "AUTHOR"){
+    const list = await Submission.find({conference:req.params.id, author:req.user.id})
+    return res.json(list)
+  }
+
+  // REVIEWER → only those assigned to reviewer
+  if(req.user.role === "REVIEWER"){
+    const list = await Submission.find({conference:req.params.id, reviewers:req.user.id})
+    return res.json(list)
+  }
+
+  // ATTENDEE:
+  const reg = await ConfReg.findOne({ conference:req.params.id, user:req.user.id })
+  if(!reg){
+    return res.status(403).json({message:"Not registered for this conference"})
+  }
+
+  // ATTENDEE sees only ACCEPTED papers
+  const list = await Submission.find({conference:req.params.id, status:"ACCEPTED"})
+  return res.json(list)
 })
+
+
 
 
 // chair decides accept/reject

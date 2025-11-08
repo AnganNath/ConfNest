@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const conferenceSchema = new mongoose.Schema({
   title: String,
   description: String,
+  status: { type:String, enum:["OPEN","CLOSED"], default:"OPEN" },
   tracks: [String],
   importantDates: {
     submissionDeadline: Date,

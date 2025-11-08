@@ -11,6 +11,7 @@ import MyAssigned from "./pages/MyAssigned"
 import ReviewPaper from "./pages/ReviewPaper"
 import Register from "./pages/Register"
 import RegisterAttendee from "./pages/RegisterAttendee"
+import MyConferences from "./pages/MyConferences"
 
 
 import Layout from "./Layout"
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/submit" element={<SubmitPaper />} />
+        <Route path="/submit/:id" element={<SubmitPaper />} />
         <Route path="/create-conference" element={<CreateConference />} />
         <Route path="/conferences" element={<ViewConferences />} />
         <Route path="/conference/:id" element={<ConferenceDetails />} />
@@ -31,7 +33,8 @@ export default function App() {
         <Route path="/review/:id" element={<ReviewPaper />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register-attendee" element={<RegisterAttendee />} />
-
+        <Route path="/my-conferences" element={<MyConferences />} />
+        
       </Routes>
     </Layout>
   )

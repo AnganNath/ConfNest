@@ -9,6 +9,8 @@ import reviewRoutes from './routes/review.routes.js';
 import scheduleRoutes from './routes/schedule.routes.js';
 import regRoutes from './routes/registration.routes.js';
 import attendeeRoutes from "./routes/attendee.routes.js"
+import confregRoutes from "./routes/confreg.routes.js"
+
 
 const app = express();
 app.use(cors({ origin: config.CLIENT_URL, credentials: true }));
@@ -23,6 +25,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/registrations', regRoutes);
 app.use("/api/attendee", attendeeRoutes)
+app.use("/api/confreg", confregRoutes)
+
 
 connectDB().then(() => {
   app.listen(config.PORT, () => console.log(`🚀 API on http://localhost:${config.PORT}`));

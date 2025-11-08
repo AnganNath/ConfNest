@@ -9,9 +9,9 @@ export default function Nav() {
 
   return (
     <AppBar position="static" color="transparent" elevation={1}>
-      <Toolbar sx={{ display: "flex", gap: 2 }}>
+      <Toolbar sx={{ display:"flex", gap:2 }}>
 
-        <Link to="/" style={{ textDecoration: "none", fontWeight: "bold", fontSize: 18 }}>ConfNest</Link>
+        <Link to="/" style={{ textDecoration:"none", fontWeight:"bold", fontSize:18 }}>ConfNest</Link>
 
         {user ? (
           <>
@@ -20,13 +20,13 @@ export default function Nav() {
               <>
                 <Link to="/create-conference">Create Conference</Link>
                 <Link to="/conferences">Conferences</Link>
+                <Link to="/assign">Assign Reviewer</Link>
               </>
             )}
 
             {/* AUTHOR MENU */}
             {user.role === "AUTHOR" && (
               <>
-                <Link to="/submit">Submit Paper</Link>
                 <Link to="/conferences">Conferences</Link>
               </>
             )}
@@ -38,20 +38,25 @@ export default function Nav() {
               </>
             )}
 
-            <Button onClick={logout} variant="outlined" size="small" sx={{ ml: "auto" }}>
+            {/* ATTENDEE MENU */}
+            {user.role === "ATTENDEE" && (
+              <>
+                <Link to="/conferences">Conferences</Link>
+                <Link to="/my-conferences">My Conferences</Link>
+              </>
+            )}
+
+            <Button onClick={logout} variant="outlined" size="small" sx={{ ml:"auto" }}>
               Logout
             </Button>
           </>
         ) : (
-          <>
-            <Link to="/register" style={{ marginLeft: "auto" }}>Register</Link>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
-              <Link to="/register-attendee">Attendee Register</Link>
-              <Link to="/login">Login</Link>
-            </div>
-          </>
-        )
-        }
+          <div style={{ marginLeft:"auto", display:"flex", gap:12 }}>
+            <Link to="/register">Register (Author)</Link>
+            <Link to="/register-attendee">Register (Attendee)</Link>
+            <Link to="/login">Login</Link>
+          </div>
+        )}
 
       </Toolbar>
     </AppBar>

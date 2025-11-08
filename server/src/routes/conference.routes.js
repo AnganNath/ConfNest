@@ -23,4 +23,9 @@ r.get('/:id', async (req,res)=>{
   res.json(conf);
 });
 
+r.post("/:id/close", auth(["CHAIR"]), async (req,res)=>{
+  const updated = await Conference.findByIdAndUpdate(req.params.id, {status:"CLOSED"}, {new:true})
+  res.json(updated)
+})
+
 export default r;

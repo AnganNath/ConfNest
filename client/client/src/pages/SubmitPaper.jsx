@@ -1,31 +1,24 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useParams } from "react-router-dom"
 import API from "../api"
-import { TextField, Button, Card, CardContent, Typography, MenuItem } from "@mui/material"
+import { TextField, Button, Card, CardContent, Typography } from "@mui/material"
 
 export default function SubmitPaper() {
-  const [conferences, setConferences] = useState([])
-  const [conference, setConference] = useState("")
+  const { id } = useParams()           // conference ID from URL
   const [title, setTitle] = useState("")
   const [abstract, setAbstract] = useState("")
   const [fileUrl, setFileUrl] = useState("")
 
-  useEffect(() => {
-    API.get("/conferences").then(res => setConferences(res.data))
-  }, [])
-
   async function submit(e) {
     e.preventDefault()
     await API.post("/submissions", {
-      conference,
+      conference: id,
       title,
       abstract,
       fileUrl
     })
     alert("Paper Submitted!")
-    setConference("")
-    setTitle("")
-    setAbstract("")
-    setFileUrl("")
+    window.location = `/conference/${id}`
   }
 
   return (
@@ -34,18 +27,6 @@ export default function SubmitPaper() {
         <Typography variant="h5" sx={{mb:2}}>Submit Paper</Typography>
         <form onSubmit={submit} style={{ display:"grid", gap:15 }}>
           
-          <TextField
-            select
-            label="Select Conference"
-            value={conference}
-            onChange={e=>setConference(e.target.value)}
-            required
-          >
-            {conferences.map(c=>(
-              <MenuItem key={c._id} value={c._id}>{c.title}</MenuItem>
-            ))}
-          </TextField>
-
           <TextField label="Paper Title" value={title} onChange={e=>setTitle(e.target.value)} required/>
 
           <TextField 
@@ -56,7 +37,7 @@ export default function SubmitPaper() {
           />
 
           <TextField
-            label="File URL (e.g. Google Drive link)"
+            label="File URL (Google Drive etc)"
             value={fileUrl}
             onChange={e=>setFileUrl(e.target.value)}
             required
