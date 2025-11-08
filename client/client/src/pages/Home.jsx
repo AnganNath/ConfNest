@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react';
-import API from '../api';
+import { useAuth } from "../auth/AuthContext"
+import { Link } from "react-router-dom"
 
-export default function Home(){
-  const [api, setApi] = useState('...');
-  useEffect(()=>{
-    fetch(import.meta.env.VITE_API_URL.replace('/api','/')).then(r=>r.text()).then(setApi);
-  },[]);
-  return (
-    <div>
-      <h1>ConfNest</h1>
-      <p>Backend says: {api}</p>
+export default function Home() {
+  const { user } = useAuth()
+
+  console.log("HOME USER =", user)   // <-- DEBUG print
+
+  if (!user) return (
+    <div style={{padding:20}}>
+      <h2>Welcome to ConfNest</h2>
+      <p>Please <Link to="/login">login</Link> to continue.</p>
     </div>
-  );
+  )
+
+  return (
+    <div style={{padding:20}}>
+      <h2>Hello {user.name}</h2>
+      <p>Your role: {user.role}</p>
+      <p>Select an option from the menu.</p>
+    </div>
+  )
 }

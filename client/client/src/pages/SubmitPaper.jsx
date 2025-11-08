@@ -1,21 +1,70 @@
-import { useState } from 'react';
-import API from '../api';
+import { useState, useEffect } from "react"
+import API from "../api"
+import { TextField, Button, Card, CardContent, Typography, MenuItem } from "@mui/material"
 
-export default function SubmitPaper(){
-  const [payload, setPayload] = useState({ conference:'', title:'', abstract:'', fileUrl:'' });
-  async function submit(e){
-    e.preventDefault();
-    await API.post('/submissions', payload);
-    alert('Submitted!');
+export default function SubmitPaper() {
+  const [conferences, setConferences] = useState([])
+  const [conference, setConference] = useState("")
+  const [title, setTitle] = useState("")
+  const [abstract, setAbstract] = useState("")
+  const [fileUrl, setFileUrl] = useState("")
+
+  useEffect(() => {
+    API.get("/conferences").then(res => setConferences(res.data))
+  }, [])
+
+  async function submit(e) {
+    e.preventDefault()
+    await API.post("/submissions", {
+      conference,
+      title,
+      abstract,
+      fileUrl
+    })
+    alert("Paper Submitted!")
+    setConference("")
+    setTitle("")
+    setAbstract("")
+    setFileUrl("")
   }
+
   return (
-    <form onSubmit={submit} style={{display:'grid', gap:8, maxWidth:480}}>
-      <h2>Submit Paper</h2>
-      <input placeholder="Conference ID" value={payload.conference} onChange={e=>setPayload({...payload, conference:e.target.value})}/>
-      <input placeholder="Title" value={payload.title} onChange={e=>setPayload({...payload, title:e.target.value})}/>
-      <textarea placeholder="Abstract" value={payload.abstract} onChange={e=>setPayload({...payload, abstract:e.target.value})}/>
-      <input placeholder="File URL" value={payload.fileUrl} onChange={e=>setPayload({...payload, fileUrl:e.target.value})}/>
-      <button>Submit</button>
-    </form>
-  );
+    <Card sx={{ maxWidth: 500, margin:"30px auto", padding:2 }}>
+      <CardContent>
+        <Typography variant="h5" sx={{mb:2}}>Submit Paper</Typography>
+        <form onSubmit={submit} style={{ display:"grid", gap:15 }}>
+          
+          <TextField
+            select
+            label="Select Conference"
+            value={conference}
+            onChange={e=>setConference(e.target.value)}
+            required
+          >
+            {conferences.map(c=>(
+              <MenuItem key={c._id} value={c._id}>{c.title}</MenuItem>
+            ))}
+          </TextField>
+
+          <TextField label="Paper Title" value={title} onChange={e=>setTitle(e.target.value)} required/>
+
+          <TextField 
+            label="Abstract" 
+            multiline rows={2}
+            value={abstract} onChange={e=>setAbstract(e.target.value)}
+            required
+          />
+
+          <TextField
+            label="File URL (e.g. Google Drive link)"
+            value={fileUrl}
+            onChange={e=>setFileUrl(e.target.value)}
+            required
+          />
+
+          <Button variant="contained" type="submit">Submit</Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
 }

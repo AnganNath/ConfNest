@@ -14,4 +14,20 @@ r.post('/', auth(['REVIEWER']), async (req,res)=>{
   res.json(rev);
 });
 
+r.get('/bySubmission/:id', auth(['REVIEWER']), async (req,res)=>{
+  const rev = await Review.findOne({
+    submission: req.params.id,
+    reviewer: req.user.id
+  })
+  res.json(rev)
+})
+// get ALL reviews for submission (chair only)
+r.get('/forSubmission/:id', auth(['CHAIR']), async (req,res)=>{
+  const list = await Review.find({ submission:req.params.id })
+    .populate('reviewer','name email')
+  res.json(list)
+})
+
+
+
 export default r;
