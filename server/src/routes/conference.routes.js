@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import Conference from '../models/Conference.js';
 import { auth } from '../middleware/auth.js';
+import Submission from "../models/Submission.js";
+import Review from "../models/Review.js";
+import ConferenceRegistration from "../models/ConferenceRegistration.js";
+
 
 const r = Router();
 
@@ -27,5 +31,33 @@ r.post("/:id/close", auth(["CHAIR"]), async (req,res)=>{
   const updated = await Conference.findByIdAndUpdate(req.params.id, {status:"CLOSED"}, {new:true})
   res.json(updated)
 })
+// DELETE a conference (CHAIR only)
+r.delete('/:id', auth(['CHAIR']), async (req, res) => {
+  try {
+    const confId = req.params.id;
+
+    // Delete submissions linked to this conference
+    const subs = await Submission.find({ conference: confId });
+    const subIds = subs.map(s => s._id);
+
+    // Delete reviews for those submissions
+    await Review.deleteMany({ submission: { $in: subIds } });
+
+    // Delete all submissions
+    await Submission.deleteMany({ conference: confId });
+
+    // Delete registrations
+    await ConferenceRegistration.deleteMany({ conference: confId });
+
+    // Finally, delete the conference itself
+    await Conference.findByIdAndDelete(confId);
+
+    res.json({ message: "Conference and all related data deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting conference:", err);
+    res.status(500).json({ message: "Error deleting conference" });
+  }
+});
+
 
 export default r;

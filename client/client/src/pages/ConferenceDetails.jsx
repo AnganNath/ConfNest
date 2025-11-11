@@ -44,44 +44,73 @@ export default function ConferenceDetails() {
     window.location.reload()
   }
 
+  async function deleteNow() {
+    if (window.confirm("⚠️ This will permanently delete the conference and all related data.\nAre you sure you want to continue?")) {
+      try {
+        await API.delete(`/conferences/${id}`)
+        alert("Conference deleted successfully.")
+        window.location = "/conferences"
+      } catch (err) {
+        alert("Error deleting conference")
+      }
+    }
+  }
+
   if (!conf) return <Typography sx={{ p: 4 }}>Loading...</Typography>
 
   return (
-    <div style={{ paddingTop:30 }}>
+    <div style={{ paddingTop: 30 }}>
 
-      <Typography variant="h4" sx={{ mb:1, fontWeight:700, textAlign:"center", color:"#084d8d" }}>
+      <Typography variant="h4" sx={{ mb: 1, fontWeight: 700, textAlign: "center", color: "#084d8d" }}>
         {conf.title}
       </Typography>
 
-      <Typography variant="subtitle1" color="text.secondary" sx={{ mb:3, textAlign:"center" }}>
+      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3, textAlign: "center" }}>
         {conf.description}
       </Typography>
 
       {/* SHOW STATUS */}
-      <Typography sx={{ mb:3, fontWeight:"bold", textAlign:"center" }}>
+      <Typography sx={{ mb: 3, fontWeight: "bold", textAlign: "center" }}>
         Status: {conf.status}
       </Typography>
 
-      {/* CHAIR BUTTONS only if open */}
-      {user?.role === "CHAIR" && conf.status === "OPEN" && (
-        <div style={{ marginBottom:20, textAlign:"center" }}>
+      {/* CHAIR BUTTONS */}
+      {user?.role === "CHAIR" && (
+        <div style={{ marginBottom: 20, textAlign: "center", display: "flex", justifyContent: "center", gap: "12px" }}>
+          {conf.status === "OPEN" && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={closeNow}
+              sx={{ borderRadius: "20px", fontWeight: 600 }}
+            >
+              Close Conference
+            </Button>
+          )}
+
           <Button
-            variant="contained"
+            variant="outlined"
             color="error"
-            onClick={closeNow}
-            sx={{ borderRadius:"20px" }}
+            sx={{
+              borderRadius: "20px",
+              fontWeight: 600,
+              borderColor: "#b71c1c",
+              color: "#b71c1c",
+              "&:hover": { background: "#b71c1c", color: "white" }
+            }}
+            onClick={deleteNow}
           >
-            Close Conference
+            Delete Conference
           </Button>
         </div>
       )}
 
-      {/* ATTENDEE REGISTER BUTTON (only if open & not registered) */}
+      {/* ATTENDEE REGISTER BUTTON */}
       {user?.role === "ATTENDEE" && conf.status === "OPEN" && !isRegistered && (
-        <div style={{ textAlign:"center" }}>
+        <div style={{ textAlign: "center" }}>
           <Button
             variant="contained"
-            sx={{ mb:3, borderRadius:"20px", background:"#1464c5" }}
+            sx={{ mb: 3, borderRadius: "20px", background: "#1464c5" }}
             onClick={regNow}
           >
             Register for this Conference
@@ -89,20 +118,22 @@ export default function ConferenceDetails() {
         </div>
       )}
       {user?.role === "ATTENDEE" && isRegistered && (
-        <Typography sx={{ mb:3, color:"green", textAlign:"center" }}>You are registered for this conference</Typography>
+        <Typography sx={{ mb: 3, color: "green", textAlign: "center" }}>
+          You are registered for this conference
+        </Typography>
       )}
 
-      <Typography variant="h6" sx={{ mb:1, fontWeight:600 }}>Tracks</Typography>
-      <ul style={{ marginBottom:30, color:"#333", lineHeight:"1.6rem" }}>
+      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>Tracks</Typography>
+      <ul style={{ marginBottom: 30, color: "#333", lineHeight: "1.6rem" }}>
         {conf.tracks.map(t => <li key={t}>{t}</li>)}
       </ul>
 
       {/* AUTHOR submit paper only if registered AND open */}
       {user?.role === "AUTHOR" && conf.status === "OPEN" && (
-        <div style={{ marginBottom:20 }}>
+        <div style={{ marginBottom: 20 }}>
           <Button
             variant="contained"
-            sx={{ mt:2, mb:3, borderRadius:"20px", background:"#1464c5" }}
+            sx={{ mt: 2, mb: 3, borderRadius: "20px", background: "#1464c5" }}
             onClick={() => window.location = `/submit/${id}`}
           >
             Submit Paper
@@ -110,18 +141,18 @@ export default function ConferenceDetails() {
         </div>
       )}
 
-      <Typography variant="h6" sx={{ mt:4, mb:2, fontWeight:600 }}>Submissions</Typography>
-      <div style={{ display:"grid", gap:20, maxWidth:650 }}>
+      <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>Submissions</Typography>
+      <div style={{ display: "grid", gap: 20, maxWidth: 650 }}>
         {subs.map(s =>
-          <Card key={s._id} sx={{ p:1, borderRadius:3, boxShadow:"0 3px 6px rgba(0,0,0,0.08)" }}>
+          <Card key={s._id} sx={{ p: 1, borderRadius: 3, boxShadow: "0 3px 6px rgba(0,0,0,0.08)" }}>
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight:600 }}>{s.title}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb:1 }}>{s.abstract}</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{s.title}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{s.abstract}</Typography>
 
               {(s.status === "ACCEPTED" || user?.role === "CHAIR") && s.fileUrl && (
                 <Button
                   size="small"
-                  sx={{ mt:1, borderRadius:"20px", background:"#1464c5" }}
+                  sx={{ mt: 1, borderRadius: "20px", background: "#1464c5" }}
                   variant="contained"
                   onClick={() => window.open(s.fileUrl, "_blank")}
                 >
@@ -129,7 +160,7 @@ export default function ConferenceDetails() {
                 </Button>
               )}
 
-              <Typography variant="body2" sx={{ mt:1, fontWeight:"bold" }}>
+              <Typography variant="body2" sx={{ mt: 1, fontWeight: "bold" }}>
                 Status: {s.status}
               </Typography>
 
@@ -137,12 +168,14 @@ export default function ConferenceDetails() {
 
               {/* decision buttons only if chair AND conference is open */}
               {user?.role === "CHAIR" && conf.status === "OPEN" && (
-                <div style={{ marginTop:12 }}>
+                <div style={{ marginTop: 12 }}>
                   <Button
                     variant="contained"
                     color="success"
-                    sx={{ marginRight:1, borderRadius:"20px" }}
-                    onClick={() => API.post(`/submissions/${s._id}/decision`, { decision: "ACCEPTED" }).then(() => window.location.reload())}
+                    sx={{ marginRight: 1, borderRadius: "20px" }}
+                    onClick={() =>
+                      API.post(`/submissions/${s._id}/decision`, { decision: "ACCEPTED" }).then(() => window.location.reload())
+                    }
                   >
                     Accept
                   </Button>
@@ -150,8 +183,10 @@ export default function ConferenceDetails() {
                   <Button
                     variant="contained"
                     color="error"
-                    sx={{ borderRadius:"20px" }}
-                    onClick={() => API.post(`/submissions/${s._id}/decision`, { decision: "REJECTED" }).then(() => window.location.reload())}
+                    sx={{ borderRadius: "20px" }}
+                    onClick={() =>
+                      API.post(`/submissions/${s._id}/decision`, { decision: "REJECTED" }).then(() => window.location.reload())
+                    }
                   >
                     Reject
                   </Button>
