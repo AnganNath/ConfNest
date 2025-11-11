@@ -11,15 +11,19 @@ export default function Login() {
   const nav = useNavigate()
 
   async function submit(e) {
-    e.preventDefault()
+  e.preventDefault()
+  try {
     const res = await API.post("/auth/login", { email, password })
-    
-    // Store user data correctly
     login({ token: res.data.token, role: res.data.role, name: res.data.name })
-    localStorage.setItem("token", res.data.token)   
-
     nav("/")
+  } catch (err) {
+    if(err.response?.data?.message){
+      alert(err.response.data.message)   // << show backend error text
+    } else {
+      alert("Login failed")
+    }
   }
+}
 
   return (
     <Card sx={{ maxWidth: 400, margin:"30px auto", padding:2 }}>

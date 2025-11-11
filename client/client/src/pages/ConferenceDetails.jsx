@@ -22,7 +22,6 @@ export default function ConferenceDetails() {
         if (reg) setIsRegistered(true)
       })
     }
-
   }, [id, user])
 
   async function regNow() {
@@ -48,26 +47,29 @@ export default function ConferenceDetails() {
   if (!conf) return <Typography sx={{ p: 4 }}>Loading...</Typography>
 
   return (
-    <>
-      <Typography variant="h4" sx={{ mb: 1 }}>{conf.title}</Typography>
-      <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 1 }}>
+    <div style={{ paddingTop:30 }}>
+
+      <Typography variant="h4" sx={{ mb:1, fontWeight:700, textAlign:"center", color:"#084d8d" }}>
+        {conf.title}
+      </Typography>
+
+      <Typography variant="subtitle1" color="text.secondary" sx={{ mb:3, textAlign:"center" }}>
         {conf.description}
       </Typography>
 
       {/* SHOW STATUS */}
-      <Typography sx={{ mb: 3, fontWeight: "bold" }}>
+      <Typography sx={{ mb:3, fontWeight:"bold", textAlign:"center" }}>
         Status: {conf.status}
       </Typography>
 
       {/* CHAIR BUTTONS only if open */}
       {user?.role === "CHAIR" && conf.status === "OPEN" && (
-        <div style={{ marginBottom: 20 }}>
-
-
+        <div style={{ marginBottom:20, textAlign:"center" }}>
           <Button
             variant="contained"
             color="error"
             onClick={closeNow}
+            sx={{ borderRadius:"20px" }}
           >
             Close Conference
           </Button>
@@ -76,53 +78,58 @@ export default function ConferenceDetails() {
 
       {/* ATTENDEE REGISTER BUTTON (only if open & not registered) */}
       {user?.role === "ATTENDEE" && conf.status === "OPEN" && !isRegistered && (
-        <Button
-          variant="contained"
-          sx={{ mb: 3 }}
-          onClick={regNow}
-        >
-          Register for this Conference
-        </Button>
+        <div style={{ textAlign:"center" }}>
+          <Button
+            variant="contained"
+            sx={{ mb:3, borderRadius:"20px", background:"#1464c5" }}
+            onClick={regNow}
+          >
+            Register for this Conference
+          </Button>
+        </div>
       )}
       {user?.role === "ATTENDEE" && isRegistered && (
-        <Typography sx={{ mb: 3, color: "green" }}>You are registered for this conference</Typography>
+        <Typography sx={{ mb:3, color:"green", textAlign:"center" }}>You are registered for this conference</Typography>
       )}
 
-      <Typography variant="h6" sx={{ mb: 1 }}>Tracks</Typography>
-      <ul>
+      <Typography variant="h6" sx={{ mb:1, fontWeight:600 }}>Tracks</Typography>
+      <ul style={{ marginBottom:30, color:"#333", lineHeight:"1.6rem" }}>
         {conf.tracks.map(t => <li key={t}>{t}</li>)}
       </ul>
 
       {/* AUTHOR submit paper only if registered AND open */}
       {user?.role === "AUTHOR" && conf.status === "OPEN" && (
-        <Button
-          variant="contained"
-          sx={{ mt: 2, mb: 3 }}
-          onClick={() => window.location = `/submit/${id}`}
-        >
-          Submit Paper
-        </Button>
+        <div style={{ marginBottom:20 }}>
+          <Button
+            variant="contained"
+            sx={{ mt:2, mb:3, borderRadius:"20px", background:"#1464c5" }}
+            onClick={() => window.location = `/submit/${id}`}
+          >
+            Submit Paper
+          </Button>
+        </div>
       )}
 
-      <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>Submissions</Typography>
-      <div style={{ display: "grid", gap: 20, maxWidth: 600 }}>
+      <Typography variant="h6" sx={{ mt:4, mb:2, fontWeight:600 }}>Submissions</Typography>
+      <div style={{ display:"grid", gap:20, maxWidth:650 }}>
         {subs.map(s =>
-          <Card key={s._id} sx={{ p: 1 }}>
+          <Card key={s._id} sx={{ p:1, borderRadius:3, boxShadow:"0 3px 6px rgba(0,0,0,0.08)" }}>
             <CardContent>
-              <Typography variant="subtitle1">{s.title}</Typography>
-              <Typography variant="body2" color="text.secondary">{s.abstract}</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight:600 }}>{s.title}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb:1 }}>{s.abstract}</Typography>
 
               {(s.status === "ACCEPTED" || user?.role === "CHAIR") && s.fileUrl && (
                 <Button
                   size="small"
-                  sx={{ mt: 1 }}
+                  sx={{ mt:1, borderRadius:"20px", background:"#1464c5" }}
+                  variant="contained"
                   onClick={() => window.open(s.fileUrl, "_blank")}
                 >
                   View Paper
                 </Button>
               )}
 
-              <Typography variant="body2" sx={{ mt: 1, fontWeight: "bold" }}>
+              <Typography variant="body2" sx={{ mt:1, fontWeight:"bold" }}>
                 Status: {s.status}
               </Typography>
 
@@ -130,11 +137,11 @@ export default function ConferenceDetails() {
 
               {/* decision buttons only if chair AND conference is open */}
               {user?.role === "CHAIR" && conf.status === "OPEN" && (
-                <div style={{ marginTop: 12 }}>
+                <div style={{ marginTop:12 }}>
                   <Button
                     variant="contained"
                     color="success"
-                    sx={{ marginRight: 1 }}
+                    sx={{ marginRight:1, borderRadius:"20px" }}
                     onClick={() => API.post(`/submissions/${s._id}/decision`, { decision: "ACCEPTED" }).then(() => window.location.reload())}
                   >
                     Accept
@@ -143,6 +150,7 @@ export default function ConferenceDetails() {
                   <Button
                     variant="contained"
                     color="error"
+                    sx={{ borderRadius:"20px" }}
                     onClick={() => API.post(`/submissions/${s._id}/decision`, { decision: "REJECTED" }).then(() => window.location.reload())}
                   >
                     Reject
@@ -153,6 +161,6 @@ export default function ConferenceDetails() {
           </Card>
         )}
       </div>
-    </>
+    </div>
   )
 }

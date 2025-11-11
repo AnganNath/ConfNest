@@ -6,11 +6,11 @@ export default function Layout({ children }) {
   return (
     <>
       <Nav />
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 4 }}>
+      <Box sx={{ background:"#F5F9FF", minHeight:"100vh", pt:4 }}>
+        <Container maxWidth="lg">
           {children}
-        </Box>
-      </Container>
+        </Container>
+      </Box>
     </>
   )
 }
