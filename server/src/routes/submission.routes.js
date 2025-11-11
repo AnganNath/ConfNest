@@ -1,96 +1,113 @@
 import { Router } from 'express';
 import Submission from '../models/Submission.js';
+import Review from '../models/Review.js';
+import Conference from "../models/Conference.js";
 import { auth } from '../middleware/auth.js';
-import Conference from "../models/Conference.js"; 
-import ConfReg from "../models/ConferenceRegistration.js" // <-- add on top
 
 const r = Router();
 
 // CREATE submission (AUTHOR)
-r.post('/', auth(['AUTHOR']), async (req,res)=>{
-  const conf = await Conference.findById(req.body.conference)
-  if(!conf) return res.status(404).json({message:"Conference not found"})
+r.post('/', auth(['AUTHOR']), async (req, res) => {
+  const conf = await Conference.findById(req.body.conference);
+  if (!conf) return res.status(404).json({ message: "Conference not found" });
 
-  if(conf.status === "CLOSED")
-    return res.status(400).json({message:"Conference is closed. Submissions disabled."})
+  if (conf.status === "CLOSED")
+    return res.status(400).json({ message: "Conference is closed. Submissions disabled." });
 
   const sub = await Submission.create({ ...req.body, author: req.user.id });
   res.json(sub);
 });
 
 // ASSIGN reviewers (CHAIR)
-r.post('/:id/assign', auth(['CHAIR']), async (req,res)=>{
+r.post('/:id/assign', auth(['CHAIR']), async (req, res) => {
   const { reviewers } = req.body;
-  const sub = await Submission.findByIdAndUpdate(req.params.id, { reviewers }, { new:true });
+  const sub = await Submission.findByIdAndUpdate(req.params.id, { reviewers }, { new: true });
   res.json(sub);
 });
 
 // GET submissions depending on role
-r.get('/', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
-  let q = {}
+r.get('/', auth(['AUTHOR', 'CHAIR', 'REVIEWER', 'ATTENDEE']), async (req, res) => {
+  let q = {};
 
-  if (req.user.role === 'AUTHOR') {
-    q = { author: req.user.id }
-  }
+  if (req.user.role === 'AUTHOR') q = { author: req.user.id };
+  if (req.user.role === 'REVIEWER') q = { reviewers: req.user.id };
 
-  if (req.user.role === 'REVIEWER') {
-    q = { reviewers: req.user.id }
-  }
-
-  // CHAIR sees all → q stays empty
-
-  const list = await Submission.find(q).populate('reviewers','name email role');
+  const list = await Submission.find(q).populate('reviewers', 'name email role');
   res.json(list);
 });
 
-// *** NEW: submissions for a specific conference ***
-r.get('/byConf/:id', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
+// submissions for a specific conference
+r.get('/byConf/:id', auth(['AUTHOR', 'CHAIR', 'REVIEWER', 'ATTENDEE']), async (req, res) => {
+  let q = { conference: req.params.id };
+  if (req.user.role === 'AUTHOR') q.author = req.user.id;
+  const list = await Submission.find(q);
+  res.json(list);
+});
 
-  // CHAIR SEE ALL
-  if(req.user.role === "CHAIR"){
-    const list = await Submission.find({conference:req.params.id})
-    return res.json(list)
-  }
+// NEW: Pending Reviews for Reviewers
+r.get('/pending-reviews', auth(['REVIEWER']), async (req, res) => {
+  // Find all submissions assigned to this reviewer
+  const assigned = await Submission.find({ reviewers: req.user.id });
 
-  // AUTHOR → only own
-  if(req.user.role === "AUTHOR"){
-    const list = await Submission.find({conference:req.params.id, author:req.user.id})
-    return res.json(list)
-  }
+  // Find all reviews already submitted by this reviewer (distinct submission ids)
+  const reviewedRaw = await Review.find({ reviewer: req.user.id }).distinct('submission');
 
-  // REVIEWER → only those assigned to reviewer
-  if(req.user.role === "REVIEWER"){
-    const list = await Submission.find({conference:req.params.id, reviewers:req.user.id})
-    return res.json(list)
-  }
+  // normalize to string ids for reliable comparison
+  const reviewedIds = reviewedRaw.map(id => id.toString());
 
-  // ATTENDEE:
-  const reg = await ConfReg.findOne({ conference:req.params.id, user:req.user.id })
-  if(!reg){
-    return res.status(403).json({message:"Not registered for this conference"})
-  }
+  // Filter only unreviewed submissions (by this reviewer)
+  const pending = assigned.filter(sub => !reviewedIds.includes(sub._id.toString()));
 
-  // ATTENDEE sees only ACCEPTED papers
-  const list = await Submission.find({conference:req.params.id, status:"ACCEPTED"})
-  return res.json(list)
-})
+  res.json(pending);
+});
 
+// NEW: Pending Decisions for Chairs
+r.get('/pending-decisions', auth(['CHAIR']), async (req, res) => {
+  // Find all conferences created by this chair
+  const confs = await Conference.find({ createdBy: req.user.id }).distinct('_id');
 
+  // Find submissions belonging to those conferences that are still under review
+  const subs = await Submission.find({
+    conference: { $in: confs },
+    status: 'UNDER_REVIEW'
+  });
 
+  if (!subs.length) return res.json([]);
+
+  // Find submissions among those that have at least one review
+  const subIds = subs.map(s => s._id);
+  const reviewedRaw = await Review.distinct('submission', {
+    submission: { $in: subIds }
+  });
+
+  const reviewedIds = reviewedRaw.map(id => id.toString());
+
+  // Keep only those subs that have reviews (pending decision)
+  const pending = subs.filter(s => reviewedIds.includes(s._id.toString()));
+
+  res.json(pending);
+});
 
 // chair decides accept/reject
-r.post('/:id/decision', auth(['CHAIR']), async (req,res)=>{
-  const { decision } = req.body
-  if(!['ACCEPTED','REJECTED'].includes(decision))
-    return res.status(400).json({message:"Invalid decision"})
-  
-  const sub = await Submission.findByIdAndUpdate(
-    req.params.id,
-    { status:decision },
-    { new:true }
-  )
-  res.json(sub)
-})
+r.post('/:id/decision', auth(['CHAIR']), async (req, res) => {
+  const { decision } = req.body;
+  if (!['ACCEPTED', 'REJECTED'].includes(decision))
+    return res.status(400).json({ message: "Invalid decision" });
 
+  const sub = await Submission.findById(req.params.id);
+  if (!sub) return res.status(404).json({ message: "Submission not found" });
+
+  // Prevent re-decision if already finalized
+  if (sub.status === 'ACCEPTED' || sub.status === 'REJECTED') {
+    return res.status(400).json({ message: `Submission already ${sub.status}` });
+  }
+
+  const updated = await Submission.findByIdAndUpdate(
+    req.params.id,
+    { status: decision },
+    { new: true }
+  );
+  res.json(updated);
+});
 
 export default r;

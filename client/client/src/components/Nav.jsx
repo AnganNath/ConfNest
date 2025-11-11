@@ -56,6 +56,7 @@ export default function Nav() {
               <Link to="/create-conference" style={pill} onMouseEnter={e=>Object.assign(e.target.style,pillHover)} onMouseLeave={e=>Object.assign(e.target.style,pill)}>Create Conference</Link>
               <Link to="/conferences" style={pill} onMouseEnter={e=>Object.assign(e.target.style,pillHover)} onMouseLeave={e=>Object.assign(e.target.style,pill)}>Conferences</Link>
               <Link to="/assign" style={pill} onMouseEnter={e=>Object.assign(e.target.style,pillHover)} onMouseLeave={e=>Object.assign(e.target.style,pill)}>Assign Reviewers</Link>
+              <Link to="/pending-decisions" style={pill} onMouseEnter={e=>Object.assign(e.target.style,pillHover)} onMouseLeave={e=>Object.assign(e.target.style,pill)}>Pending Decisions</Link>
             </>
           )}
 
@@ -66,9 +67,16 @@ export default function Nav() {
           )}
 
           {user?.role === "REVIEWER" && (
+            <>
             <Link to="/assigned" style={pill} onMouseEnter={e=>Object.assign(e.target.style,pillHover)} onMouseLeave={e=>Object.assign(e.target.style,pill)}>
               Assigned Papers
             </Link>
+            <Link to="/pending-reviews" style={pill} onMouseEnter={e=>Object.assign(e.target.style,pillHover)} onMouseLeave={e=>Object.assign(e.target.style,pill)}>
+             Pending Reviews
+            </Link>
+            </>
+            
+            
           )}
 
           {user?.role === "ATTENDEE" && (
