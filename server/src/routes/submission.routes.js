@@ -25,16 +25,25 @@ r.post('/:id/assign', auth(['CHAIR']), async (req, res) => {
   res.json(sub);
 });
 
+
 // GET submissions depending on role
-r.get('/', auth(['AUTHOR', 'CHAIR', 'REVIEWER', 'ATTENDEE']), async (req, res) => {
-  let q = {};
+r.get('/', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
+  let q = {}
 
-  if (req.user.role === 'AUTHOR') q = { author: req.user.id };
-  if (req.user.role === 'REVIEWER') q = { reviewers: req.user.id };
+  if (req.user.role === 'AUTHOR') {
+    q = { author: req.user.id }
+  }
+  if (req.user.role === 'REVIEWER') {
+    q = { reviewers: req.user.id }
+  }
 
-  const list = await Submission.find(q).populate('reviewers', 'name email role');
+  const list = await Submission.find(q)
+    .populate('conference', 'title')  // <--- Add this
+    .populate('reviewers', 'name email role');
+
   res.json(list);
 });
+
 
 // submissions for a specific conference
 r.get('/byConf/:id', auth(['AUTHOR', 'CHAIR', 'REVIEWER', 'ATTENDEE']), async (req, res) => {

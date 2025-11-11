@@ -15,7 +15,7 @@ export default function Register(){
   return (
     <Card sx={{maxWidth:400, margin:"40px auto", p:2}}>
       <CardContent>
-        <Typography variant="h5" sx={{mb:2}}>Register</Typography>
+        <Typography variant="h5" sx={{mb:2}}>Register as Author</Typography>
         <form onSubmit={submit} style={{display:"grid", gap:16}}>
           <TextField label="Name" value={payload.name}
             onChange={e=>setPayload({...payload,name:e.target.value})} required/>

@@ -14,6 +14,7 @@ import RegisterAttendee from "./pages/RegisterAttendee"
 import MyConferences from "./pages/MyConferences"
 import PendingReviews from "./pages/PendingReviews";
 import PendingDecisions from "./pages/PendingDecisions";
+import MySubmissions from "./pages/MySubmissions";
 
 
 import Layout from "./Layout"
@@ -38,6 +39,8 @@ export default function App() {
         <Route path="/my-conferences" element={<MyConferences />} />
         <Route path="/pending-reviews" element={<PendingReviews />} />
         <Route path="/pending-decisions" element={<PendingDecisions />} />
+        <Route path="/my-submissions" element={<MySubmissions />} />
+
 
       </Routes>
     </Layout>
