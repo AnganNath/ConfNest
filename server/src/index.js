@@ -11,9 +11,20 @@ import regRoutes from './routes/registration.routes.js';
 import attendeeRoutes from "./routes/attendee.routes.js"
 import confregRoutes from "./routes/confreg.routes.js"
 
-
+const allowedOrigins = config.CLIENT_URL.split(",");
 const app = express();
-app.use(cors({ origin: config.CLIENT_URL, credentials: true }));
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))  // <-- ADD THIS LINE
 

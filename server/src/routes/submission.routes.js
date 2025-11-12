@@ -3,6 +3,7 @@ import Submission from '../models/Submission.js';
 import Review from '../models/Review.js';
 import Conference from "../models/Conference.js";
 import { auth } from '../middleware/auth.js';
+import ConfReg from "../models/ConferenceRegistration.js";
 
 const r = Router();
 
@@ -46,9 +47,31 @@ r.get('/', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
 
 
 // submissions for a specific conference
-r.get('/byConf/:id', auth(['AUTHOR', 'CHAIR', 'REVIEWER', 'ATTENDEE']), async (req, res) => {
-  let q = { conference: req.params.id };
-  if (req.user.role === 'AUTHOR') q.author = req.user.id;
+r.get('/byConf/:id', auth(['AUTHOR','CHAIR','REVIEWER','ATTENDEE']), async (req,res)=>{
+  const confId = req.params.id;
+  let q = { conference: confId };
+
+  // Authors see only their own
+  if (req.user.role === 'AUTHOR') {
+    q.author = req.user.id;
+  }
+
+  // Reviewers see only assigned
+  else if (req.user.role === 'REVIEWER') {
+    q.reviewers = req.user.id;
+  }
+
+  // Attendees — must be registered
+  else if (req.user.role === 'ATTENDEE') {
+    const reg = await ConfReg.findOne({ user: req.user.id, conference: confId });
+    if (!reg) {
+      // Not registered — return only basic info (no file URLs)
+      const subs = await Submission.find({ conference: confId })
+        .select("title abstract status");
+      return res.json(subs);
+    }
+  }
+
   const list = await Submission.find(q);
   res.json(list);
 });
